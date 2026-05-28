@@ -6,7 +6,7 @@
 
 namespace xsim {
 
-TaskWorker::TaskWorker(const Task& task, RuntimeStats& stats, std::mutex& output_mutex)
+TaskWorker::TaskWorker(Task& task, RuntimeStats& stats, std::mutex& output_mutex)
     : task_(task),
       stats_(stats),
       output_mutex_(output_mutex)
@@ -44,7 +44,7 @@ bool TaskWorker::dispatch(const timespec& release_time, const timespec& deadline
         std::lock_guard<std::mutex> output_lock(output_mutex_);
         std::cerr
             << "[DISPATCH MISS] "
-            << task_.name
+            << task_.name()
             << " cycle=" << cycle
             << " previous invocation still running\n";
         return false;
@@ -95,22 +95,22 @@ void TaskWorker::run()
             stats_.late_start_count++;
         }
 
-        task_.func();
+        task_.tick();
 
         timespec actual_end = now_monotonic();
         long exec_ns = diff_ns(actual_end, actual_start);
         long deadline_lateness_ns = diff_ns(actual_end, invocation.deadline_time);
 
-        if (exec_ns > task_.wcet_ns || deadline_lateness_ns > 0) {
+        if (exec_ns > task_.wcet_ns() || deadline_lateness_ns > 0) {
             stats_.overrun_count++;
 
             std::lock_guard<std::mutex> output_lock(output_mutex_);
             std::cerr
                 << "[OVERRUN] "
-                << task_.name
+                << task_.name()
                 << " cycle=" << invocation.cycle
                 << " exec_ns=" << exec_ns
-                << " wcet_ns=" << task_.wcet_ns
+                << " wcet_ns=" << task_.wcet_ns()
                 << " deadline_lateness_ns=" << deadline_lateness_ns
                 << "\n";
         }

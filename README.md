@@ -34,7 +34,7 @@ For a short timing check:
 timeout 10s ./build/x-sim
 ```
 
-The current `TaskA` prints the wall-clock Unix time in milliseconds once per 1000 ms cycle.
+The current `TaskA` prints the wall-clock Unix time in milliseconds once per 1000 ms cycle. `SIGINT` and `SIGTERM` request a graceful stop so task finalization hooks can run.
 
 ## Memory Locking
 
@@ -73,7 +73,34 @@ TaskC: cycle + 500 ms, WCET 20 ms
 TaskD: cycle + 900 ms, WCET 30 ms
 ```
 
-Task definitions live in `src/tasks/`. The scheduler validates that each task starts inside the major cycle and that each task's offset plus WCET fits inside the cycle.
+Task definitions live in `src/tasks/`. Define a task by deriving from `xsim::Task`, passing its name, offset, and WCET to the base constructor, and overriding `tick()`. Tasks may also override `initialize()` and `finalize()` for explicit setup and teardown.
+
+```cpp
+class TaskA final : public xsim::Task {
+public:
+    TaskA()
+        : Task("TaskA", 0 * xsim::NS_PER_MS, 5 * xsim::NS_PER_MS)
+    {
+    }
+
+    void initialize() override
+    {
+        // Runs before the first tick and is not counted against WCET.
+    }
+
+    void tick() override
+    {
+        // Runs once per scheduled invocation and is measured against WCET.
+    }
+
+    void finalize() override
+    {
+        // Runs after worker threads stop during graceful shutdown.
+    }
+};
+```
+
+The scheduler validates that each task starts inside the major cycle and that each task's offset plus WCET fits inside the cycle. All task `initialize()` calls complete before worker threads are started and before the first scheduled `tick()`. Only `tick()` execution is counted against WCET. Member variables stored inside each task object persist across ticks for that task instance and are released when the task object is destroyed after finalization.
 
 ## Notes
 

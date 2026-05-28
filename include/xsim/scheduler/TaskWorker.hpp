@@ -19,7 +19,7 @@ struct TaskInvocation {
 
 class TaskWorker {
 public:
-    TaskWorker(const Task& task, RuntimeStats& stats, std::mutex& output_mutex);
+    TaskWorker(Task& task, RuntimeStats& stats, std::mutex& output_mutex);
     ~TaskWorker();
 
     TaskWorker(const TaskWorker&) = delete;
@@ -31,7 +31,7 @@ private:
     void stop();
     void run();
 
-    const Task& task_;
+    Task& task_;
     RuntimeStats& stats_;
     std::mutex& output_mutex_;
     std::mutex mutex_;
