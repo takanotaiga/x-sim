@@ -5,6 +5,7 @@
 #include <mutex>
 
 namespace xsim {
+namespace sample_apps {
 
 Task make_task_a(std::mutex& output_mutex)
 {
@@ -19,4 +20,5 @@ Task make_task_a(std::mutex& output_mutex)
     };
 }
 
+} // namespace sample_apps
 } // namespace xsim

@@ -10,7 +10,7 @@ int main()
 
     xsim::lock_memory();
 
-    auto tasks = xsim::create_tasks(output_mutex);
+    auto tasks = xsim::sample_apps::create_tasks(output_mutex);
     xsim::CyclicScheduler scheduler(std::move(tasks), output_mutex);
 
     if (!scheduler.validate_schedule()) {
