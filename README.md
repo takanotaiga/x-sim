@@ -36,20 +36,19 @@ timeout 10s ./build/x-sim
 
 The current `TaskA` prints the wall-clock Unix time in milliseconds once per 1000 ms cycle.
 
-## Realtime Permissions
+## Memory Locking
 
 The program calls:
 
 - `mlockall(MCL_CURRENT | MCL_FUTURE)`
-- `pthread_setschedparam(..., SCHED_FIFO, priority=80)`
 
-These may fail without sufficient privileges. If you run as a normal user, messages such as this are expected:
+This may fail without sufficient privileges or a high enough `RLIMIT_MEMLOCK`. If it fails, the program continues and prints:
 
 ```text
-pthread_setschedparam failed: Operation not permitted
+mlockall failed: ...
 ```
 
-For production, run with appropriate Linux capabilities or service configuration, for example `CAP_SYS_NICE` for realtime scheduling and `CAP_IPC_LOCK` for memory locking.
+For production, configure memory locking appropriately, for example with `CAP_IPC_LOCK` or system resource limits.
 
 ## Project Layout
 
