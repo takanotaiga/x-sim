@@ -1,0 +1,4 @@
+build/
+*.o
+*.out
+tick_1khz
