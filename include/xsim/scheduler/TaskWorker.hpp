@@ -34,13 +34,13 @@ private:
     const Task& task_;
     RuntimeStats& stats_;
     std::mutex& output_mutex_;
-    std::thread thread_;
     std::mutex mutex_;
     std::condition_variable cv_;
     TaskInvocation pending_{};
     bool has_pending_ = false;
     bool running_ = false;
     bool stopping_ = false;
+    std::thread thread_;
 };
 
 } // namespace xsim

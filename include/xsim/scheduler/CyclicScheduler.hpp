@@ -26,8 +26,8 @@ private:
     void start_workers();
 
     std::vector<Task> tasks_;
-    std::vector<std::unique_ptr<TaskWorker>> workers_;
     RuntimeStats stats_;
+    std::vector<std::unique_ptr<TaskWorker>> workers_;
     std::mutex& output_mutex_;
     long major_cycle_ns_;
 };

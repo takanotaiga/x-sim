@@ -9,9 +9,9 @@ namespace xsim {
 TaskWorker::TaskWorker(const Task& task, RuntimeStats& stats, std::mutex& output_mutex)
     : task_(task),
       stats_(stats),
-      output_mutex_(output_mutex),
-      thread_(&TaskWorker::run, this)
+      output_mutex_(output_mutex)
 {
+    thread_ = std::thread(&TaskWorker::run, this);
 }
 
 TaskWorker::~TaskWorker()
