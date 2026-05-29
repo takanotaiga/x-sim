@@ -1,0 +1,37 @@
+name: CMake Linux CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: CMake build and smoke test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Smoke test
+        shell: bash
+        run: |
+          set +e
+          ulimit -l 0
+          timeout 10s ./build/x-sim
+          status=$?
+          set -e
+
+          if [ "$status" -eq 0 ] || [ "$status" -eq 124 ]; then
+            exit 0
+          fi
+
+          exit "$status"
