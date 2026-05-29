@@ -103,6 +103,15 @@ public:
 
 The scheduler validates that each task starts inside the major cycle and that each task's offset plus WCET fits inside the cycle. All task `initialize()` calls complete before worker threads are started and before the first scheduled `tick()`. Only `tick()` execution is counted against WCET. Member variables stored inside each task object persist across ticks for that task instance and are released when the task object is destroyed after finalization.
 
+WCET violations are controlled by `xsim::WcetViolationPolicy`. The default policy is `Log`, which records the overrun and keeps running. `Terminate` records the overrun, logs the active policy, then asks the scheduler loop to stop so workers are joined and task `finalize()` hooks still run where possible.
+
+```cpp
+xsim::CyclicScheduler scheduler(
+    std::move(tasks),
+    xsim::DEFAULT_MAJOR_CYCLE_NS,
+    xsim::WcetViolationPolicy::Terminate);
+```
+
 ## Notes
 
 - Scheduler timing uses `CLOCK_MONOTONIC`.

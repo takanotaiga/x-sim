@@ -2,7 +2,9 @@
 
 #include "xsim/scheduler/RuntimeStats.hpp"
 #include "xsim/scheduler/Task.hpp"
+#include "xsim/scheduler/WcetViolationPolicy.hpp"
 
+#include <atomic>
 #include <condition_variable>
 #include <cstdint>
 #include <mutex>
@@ -19,7 +21,10 @@ struct TaskInvocation {
 
 class TaskWorker {
 public:
-    TaskWorker(Task& task, RuntimeStats& stats);
+    TaskWorker(Task& task,
+               RuntimeStats& stats,
+               WcetViolationPolicy wcet_violation_policy,
+               std::atomic<bool>& termination_requested);
     ~TaskWorker();
 
     TaskWorker(const TaskWorker&) = delete;
@@ -33,6 +38,8 @@ private:
 
     Task& task_;
     RuntimeStats& stats_;
+    WcetViolationPolicy wcet_violation_policy_;
+    std::atomic<bool>& termination_requested_;
     std::mutex mutex_;
     std::condition_variable cv_;
     TaskInvocation pending_{};

@@ -7,9 +7,11 @@
 namespace xsim {
 
 CyclicScheduler::CyclicScheduler(std::vector<std::unique_ptr<Task>> tasks,
-                                 long major_cycle_ns)
+                                 long major_cycle_ns,
+                                 WcetViolationPolicy wcet_violation_policy)
     : tasks_(std::move(tasks)),
-      major_cycle_ns_(major_cycle_ns)
+      major_cycle_ns_(major_cycle_ns),
+      wcet_violation_policy_(wcet_violation_policy)
 {
     std::sort(tasks_.begin(), tasks_.end(), [](const auto& a, const auto& b) {
         if (!a) {
@@ -66,9 +68,11 @@ void CyclicScheduler::run_forever()
 
 void CyclicScheduler::run_until(const StopRequested& stop_requested)
 {
+    termination_requested_.store(false);
+
     initialize_tasks();
 
-    if (stop_requested()) {
+    if (stop_requested() || termination_requested_.load()) {
         finalize_tasks();
         logging::shutdown();
         return;
@@ -78,30 +82,34 @@ void CyclicScheduler::run_until(const StopRequested& stop_requested)
 
     timespec cycle_start = now_monotonic();
 
-    while (!stop_requested()) {
+    while (!stop_requested() && !termination_requested_.load()) {
         const uint64_t current_cycle = stats_.cycle_count.load();
         const timespec current_cycle_start = cycle_start;
         const timespec current_cycle_end = add_ns(current_cycle_start, major_cycle_ns_);
 
-        for (size_t i = 0; i < tasks_.size(); ++i) {
+        for (size_t i = 0; i < tasks_.size() && !termination_requested_.load(); ++i) {
             const Task& task = *tasks_[i];
             timespec release_time = add_ns(current_cycle_start, task.offset_ns());
             timespec deadline_time = add_ns(release_time, task.wcet_ns());
 
             sleep_until(release_time);
 
-            if (stop_requested()) {
+            if (stop_requested() || termination_requested_.load()) {
                 break;
             }
 
             workers_[i]->dispatch(release_time, deadline_time, current_cycle);
         }
 
-        if (stop_requested()) {
+        if (stop_requested() || termination_requested_.load()) {
             break;
         }
 
         sleep_until(current_cycle_end);
+
+        if (stop_requested() || termination_requested_.load()) {
+            break;
+        }
 
         const uint64_t completed_cycle = ++stats_.cycle_count;
 
@@ -144,7 +152,8 @@ void CyclicScheduler::start_workers()
     workers_.reserve(tasks_.size());
 
     for (const auto& task : tasks_) {
-        workers_.emplace_back(std::make_unique<TaskWorker>(*task, stats_));
+        workers_.emplace_back(
+            std::make_unique<TaskWorker>(*task, stats_, wcet_violation_policy_, termination_requested_));
     }
 }
 
