@@ -1,15 +1,14 @@
 #include "xsim/scheduler/CyclicScheduler.hpp"
 
+#include "xsim/logging/Logging.hpp"
+
 #include <algorithm>
-#include <iostream>
 
 namespace xsim {
 
 CyclicScheduler::CyclicScheduler(std::vector<std::unique_ptr<Task>> tasks,
-                                 std::mutex& output_mutex,
                                  long major_cycle_ns)
     : tasks_(std::move(tasks)),
-      output_mutex_(output_mutex),
       major_cycle_ns_(major_cycle_ns)
 {
     std::sort(tasks_.begin(), tasks_.end(), [](const auto& a, const auto& b) {
@@ -35,22 +34,22 @@ bool CyclicScheduler::validate_schedule() const
 {
     for (const auto& task : tasks_) {
         if (!task) {
-            std::cerr << "invalid task: null task\n";
+            logging::cerr << "invalid task: null task" << logging::endl;
             return false;
         }
 
         if (task->offset_ns() < 0 || task->offset_ns() >= major_cycle_ns_) {
-            std::cerr << "invalid offset: " << task->name() << "\n";
+            logging::cerr << "invalid offset: " << task->name() << logging::endl;
             return false;
         }
 
         if (task->wcet_ns() <= 0) {
-            std::cerr << "invalid WCET: " << task->name() << "\n";
+            logging::cerr << "invalid WCET: " << task->name() << logging::endl;
             return false;
         }
 
         if (task->offset_ns() + task->wcet_ns() > major_cycle_ns_) {
-            std::cerr << "task exceeds major cycle: " << task->name() << "\n";
+            logging::cerr << "task exceeds major cycle: " << task->name() << logging::endl;
             return false;
         }
     }
@@ -71,6 +70,7 @@ void CyclicScheduler::run_until(const StopRequested& stop_requested)
 
     if (stop_requested()) {
         finalize_tasks();
+        logging::shutdown();
         return;
     }
 
@@ -106,14 +106,13 @@ void CyclicScheduler::run_until(const StopRequested& stop_requested)
         const uint64_t completed_cycle = ++stats_.cycle_count;
 
         if (completed_cycle % 10 == 0) {
-            std::lock_guard<std::mutex> output_lock(output_mutex_);
-            std::cout
+            logging::cout
                 << "cycle=" << completed_cycle
                 << " overrun=" << stats_.overrun_count.load()
                 << " late_start=" << stats_.late_start_count.load()
                 << " cycle_skip=" << stats_.cycle_skip_count.load()
                 << " dispatch_miss=" << stats_.dispatch_miss_count.load()
-                << "\n";
+                << logging::endl;
         }
 
         cycle_start = add_ns(cycle_start, major_cycle_ns_);
@@ -128,6 +127,7 @@ void CyclicScheduler::run_until(const StopRequested& stop_requested)
 
     stop_workers();
     finalize_tasks();
+    logging::shutdown();
 }
 
 const RuntimeStats& CyclicScheduler::stats() const
@@ -144,7 +144,7 @@ void CyclicScheduler::start_workers()
     workers_.reserve(tasks_.size());
 
     for (const auto& task : tasks_) {
-        workers_.emplace_back(std::make_unique<TaskWorker>(*task, stats_, output_mutex_));
+        workers_.emplace_back(std::make_unique<TaskWorker>(*task, stats_));
     }
 }
 

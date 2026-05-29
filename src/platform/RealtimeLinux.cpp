@@ -1,8 +1,8 @@
+#include "xsim/logging/Logging.hpp"
 #include "xsim/platform/Realtime.hpp"
 
 #include <cerrno>
 #include <cstring>
-#include <iostream>
 #include <sys/mman.h>
 
 namespace xsim {
@@ -10,7 +10,7 @@ namespace xsim {
 bool lock_memory()
 {
     if (mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
-        std::cerr << "mlockall failed: " << strerror(errno) << "\n";
+        logging::cerr << "mlockall failed: " << strerror(errno) << logging::endl;
         return false;
     }
 

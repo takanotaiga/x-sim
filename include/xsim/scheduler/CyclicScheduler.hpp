@@ -7,7 +7,6 @@
 
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <vector>
 
 namespace xsim {
@@ -16,8 +15,7 @@ class CyclicScheduler {
 public:
     using StopRequested = std::function<bool()>;
 
-    CyclicScheduler(std::vector<std::unique_ptr<Task>> tasks,
-                    std::mutex& output_mutex,
+    explicit CyclicScheduler(std::vector<std::unique_ptr<Task>> tasks,
                     long major_cycle_ns = DEFAULT_MAJOR_CYCLE_NS);
     ~CyclicScheduler();
 
@@ -36,7 +34,6 @@ private:
     std::vector<std::unique_ptr<Task>> tasks_;
     RuntimeStats stats_;
     std::vector<std::unique_ptr<TaskWorker>> workers_;
-    std::mutex& output_mutex_;
     long major_cycle_ns_;
     bool tasks_initialized_ = false;
     bool tasks_finalized_ = false;

@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(x-sim
     src/main.cpp
+    src/logging/Logging.cpp
     src/platform/ClockLinux.cpp
     src/platform/RealtimeLinux.cpp
     src/scheduler/CyclicScheduler.cpp

@@ -1,9 +1,9 @@
+#include "xsim/logging/Logging.hpp"
 #include "xsim/platform/Realtime.hpp"
 #include "xsim/scheduler/CyclicScheduler.hpp"
 #include "xsim/tasks/TaskRegistry.hpp"
 
 #include <csignal>
-#include <mutex>
 
 namespace {
 
@@ -21,14 +21,13 @@ int main()
     std::signal(SIGINT, request_stop);
     std::signal(SIGTERM, request_stop);
 
-    std::mutex output_mutex;
-
     xsim::lock_memory();
 
-    auto tasks = xsim::sample_apps::create_tasks(output_mutex);
-    xsim::CyclicScheduler scheduler(std::move(tasks), output_mutex);
+    auto tasks = xsim::sample_apps::create_tasks();
+    xsim::CyclicScheduler scheduler(std::move(tasks));
 
     if (!scheduler.validate_schedule()) {
+        xsim::logging::shutdown();
         return 1;
     }
 
