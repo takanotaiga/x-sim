@@ -57,6 +57,31 @@ bool TaskWorker::dispatch(const timespec& release_time, const timespec& deadline
     return true;
 }
 
+bool TaskWorker::wait_for_completion(uint64_t cycle, TaskCompletion& completion)
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    completion_cv_.wait(lock, [this, cycle] {
+        return stopping_ || (has_completion_ && last_completion_.cycle >= cycle);
+    });
+
+    if (!has_completion_ || last_completion_.cycle < cycle) {
+        return false;
+    }
+
+    completion = last_completion_;
+    return true;
+}
+
+timespec TaskWorker::wait_until_idle()
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    completion_cv_.wait(lock, [this] {
+        return stopping_ || (!running_ && !has_pending_);
+    });
+
+    return now_monotonic();
+}
+
 void TaskWorker::stop()
 {
     {
@@ -65,6 +90,7 @@ void TaskWorker::stop()
     }
 
     cv_.notify_one();
+    completion_cv_.notify_all();
 
     if (thread_.joinable()) {
         thread_.join();
@@ -103,8 +129,9 @@ void TaskWorker::run()
         timespec actual_end = now_monotonic();
         long exec_ns = diff_ns(actual_end, actual_start);
         long deadline_lateness_ns = diff_ns(actual_end, invocation.deadline_time);
+        const bool overran = exec_ns > task_.wcet_ns() || deadline_lateness_ns > 0;
 
-        if (exec_ns > task_.wcet_ns() || deadline_lateness_ns > 0) {
+        if (overran) {
             stats_.overrun_count++;
 
             logging::cerr
@@ -125,7 +152,18 @@ void TaskWorker::run()
         {
             std::lock_guard<std::mutex> lock(mutex_);
             running_ = false;
+            last_completion_ = {
+                invocation.cycle,
+                actual_start,
+                actual_end,
+                exec_ns,
+                deadline_lateness_ns,
+                overran,
+            };
+            has_completion_ = true;
         }
+
+        completion_cv_.notify_all();
     }
 }
 
