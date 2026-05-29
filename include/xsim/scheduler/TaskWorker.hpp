@@ -19,7 +19,7 @@ struct TaskInvocation {
 
 class TaskWorker {
 public:
-    TaskWorker(Task& task, RuntimeStats& stats, std::mutex& output_mutex);
+    TaskWorker(Task& task, RuntimeStats& stats);
     ~TaskWorker();
 
     TaskWorker(const TaskWorker&) = delete;
@@ -33,7 +33,6 @@ private:
 
     Task& task_;
     RuntimeStats& stats_;
-    std::mutex& output_mutex_;
     std::mutex mutex_;
     std::condition_variable cv_;
     TaskInvocation pending_{};

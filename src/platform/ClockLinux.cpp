@@ -1,8 +1,8 @@
+#include "xsim/logging/Logging.hpp"
 #include "xsim/platform/Clock.hpp"
 
 #include <cerrno>
 #include <cstring>
-#include <iostream>
 
 namespace xsim {
 
@@ -52,7 +52,7 @@ void sleep_until(const timespec& target)
         }
 
         if (ret != EINTR) {
-            std::cerr << "clock_nanosleep failed: " << strerror(ret) << "\n";
+            logging::cerr << "clock_nanosleep failed: " << strerror(ret) << logging::endl;
             return;
         }
     }

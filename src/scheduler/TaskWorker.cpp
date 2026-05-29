@@ -1,15 +1,13 @@
 #include "xsim/scheduler/TaskWorker.hpp"
 
+#include "xsim/logging/Logging.hpp"
 #include "xsim/platform/Clock.hpp"
-
-#include <iostream>
 
 namespace xsim {
 
-TaskWorker::TaskWorker(Task& task, RuntimeStats& stats, std::mutex& output_mutex)
+TaskWorker::TaskWorker(Task& task, RuntimeStats& stats)
     : task_(task),
-      stats_(stats),
-      output_mutex_(output_mutex)
+      stats_(stats)
 {
     thread_ = std::thread(&TaskWorker::run, this);
 }
@@ -41,12 +39,12 @@ bool TaskWorker::dispatch(const timespec& release_time, const timespec& deadline
     if (missed) {
         stats_.dispatch_miss_count++;
 
-        std::lock_guard<std::mutex> output_lock(output_mutex_);
-        std::cerr
+        logging::cerr
             << "[DISPATCH MISS] "
             << task_.name()
             << " cycle=" << cycle
-            << " previous invocation still running\n";
+            << " previous invocation still running"
+            << logging::endl;
         return false;
     }
 
@@ -104,15 +102,14 @@ void TaskWorker::run()
         if (exec_ns > task_.wcet_ns() || deadline_lateness_ns > 0) {
             stats_.overrun_count++;
 
-            std::lock_guard<std::mutex> output_lock(output_mutex_);
-            std::cerr
+            logging::cerr
                 << "[OVERRUN] "
                 << task_.name()
                 << " cycle=" << invocation.cycle
                 << " exec_ns=" << exec_ns
                 << " wcet_ns=" << task_.wcet_ns()
                 << " deadline_lateness_ns=" << deadline_lateness_ns
-                << "\n";
+                << logging::endl;
         }
 
         {

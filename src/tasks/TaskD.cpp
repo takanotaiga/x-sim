@@ -2,7 +2,6 @@
 #include "xsim/scheduler/Task.hpp"
 
 #include <memory>
-#include <mutex>
 
 namespace xsim {
 namespace sample_apps {
@@ -19,7 +18,7 @@ public:
     }
 };
 
-std::unique_ptr<Task> make_task_d(std::mutex&)
+std::unique_ptr<Task> make_task_d()
 {
     return std::make_unique<TaskD>();
 }

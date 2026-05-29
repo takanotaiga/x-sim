@@ -57,6 +57,7 @@ include/xsim/platform/     Clock and realtime setup APIs
 include/xsim/scheduler/    Task, worker, and cyclic scheduler APIs
 include/xsim/tasks/        Task registry API
 
+src/logging/               Async logging implementation
 src/platform/              Linux-specific clock and realtime implementation
 src/scheduler/             Cyclic dispatch and per-task worker threads
 src/tasks/                 TaskA-D implementations and registry
