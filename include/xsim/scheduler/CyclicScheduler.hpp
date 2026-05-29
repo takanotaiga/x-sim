@@ -4,7 +4,9 @@
 #include "xsim/scheduler/RuntimeStats.hpp"
 #include "xsim/scheduler/Task.hpp"
 #include "xsim/scheduler/TaskWorker.hpp"
+#include "xsim/scheduler/WcetViolationPolicy.hpp"
 
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -16,7 +18,8 @@ public:
     using StopRequested = std::function<bool()>;
 
     explicit CyclicScheduler(std::vector<std::unique_ptr<Task>> tasks,
-                    long major_cycle_ns = DEFAULT_MAJOR_CYCLE_NS);
+                             long major_cycle_ns = DEFAULT_MAJOR_CYCLE_NS,
+                             WcetViolationPolicy wcet_violation_policy = WcetViolationPolicy::Log);
     ~CyclicScheduler();
 
     bool validate_schedule() const;
@@ -35,6 +38,8 @@ private:
     RuntimeStats stats_;
     std::vector<std::unique_ptr<TaskWorker>> workers_;
     long major_cycle_ns_;
+    WcetViolationPolicy wcet_violation_policy_;
+    std::atomic<bool> termination_requested_{false};
     bool tasks_initialized_ = false;
     bool tasks_finalized_ = false;
 };

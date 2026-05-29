@@ -5,9 +5,14 @@
 
 namespace xsim {
 
-TaskWorker::TaskWorker(Task& task, RuntimeStats& stats)
+TaskWorker::TaskWorker(Task& task,
+                       RuntimeStats& stats,
+                       WcetViolationPolicy wcet_violation_policy,
+                       std::atomic<bool>& termination_requested)
     : task_(task),
-      stats_(stats)
+      stats_(stats),
+      wcet_violation_policy_(wcet_violation_policy),
+      termination_requested_(termination_requested)
 {
     thread_ = std::thread(&TaskWorker::run, this);
 }
@@ -109,7 +114,12 @@ void TaskWorker::run()
                 << " exec_ns=" << exec_ns
                 << " wcet_ns=" << task_.wcet_ns()
                 << " deadline_lateness_ns=" << deadline_lateness_ns
+                << " policy=" << to_string(wcet_violation_policy_)
                 << logging::endl;
+
+            if (wcet_violation_policy_ == WcetViolationPolicy::Terminate) {
+                termination_requested_.store(true);
+            }
         }
 
         {
