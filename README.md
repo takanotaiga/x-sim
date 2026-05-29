@@ -112,6 +112,16 @@ xsim::CyclicScheduler scheduler(
     xsim::WcetViolationPolicy::Terminate);
 ```
 
+Task dependencies can be registered by name. A dependency is scoped to the same major cycle and must fit inside the fixed release window, so the prerequisite task's deadline must be at or before the dependent task's offset.
+
+```cpp
+xsim::CyclicScheduler scheduler(
+    std::move(tasks),
+    {xsim::TaskDependency{"TaskB", "TaskA"}});
+```
+
+If `TaskA` completes by its deadline, `TaskB` keeps its fixed offset. If `TaskA` is still running at `TaskB`'s release time, `TaskB` waits for `TaskA` to complete and the scheduler records `dependency_delay_count` / `dependency_delay_ns` plus a `[DEPENDENCY DELAY]` log. This delay is tracked separately from `late_start`, which remains focused on worker dispatch timing after a task is released.
+
 ## Notes
 
 - Scheduler timing uses `CLOCK_MONOTONIC`.

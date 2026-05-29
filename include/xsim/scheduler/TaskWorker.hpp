@@ -1,6 +1,7 @@
 #pragma once
 
 #include "xsim/scheduler/RuntimeStats.hpp"
+#include "xsim/scheduler/TaskCompletion.hpp"
 #include "xsim/scheduler/Task.hpp"
 #include "xsim/scheduler/WcetViolationPolicy.hpp"
 
@@ -31,6 +32,8 @@ public:
     TaskWorker& operator=(const TaskWorker&) = delete;
 
     bool dispatch(const timespec& release_time, const timespec& deadline_time, uint64_t cycle);
+    bool wait_for_completion(uint64_t cycle, TaskCompletion& completion);
+    timespec wait_until_idle();
 
 private:
     void stop();
@@ -42,7 +45,10 @@ private:
     std::atomic<bool>& termination_requested_;
     std::mutex mutex_;
     std::condition_variable cv_;
+    std::condition_variable completion_cv_;
     TaskInvocation pending_{};
+    TaskCompletion last_completion_{};
+    bool has_completion_ = false;
     bool has_pending_ = false;
     bool running_ = false;
     bool stopping_ = false;
