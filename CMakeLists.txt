@@ -12,6 +12,7 @@ add_executable(x-sim
     src/platform/ClockLinux.cpp
     src/platform/RealtimeLinux.cpp
     src/scheduler/CyclicScheduler.cpp
+    src/scheduler/TaskCycleContext.cpp
     src/scheduler/TaskWorker.cpp
     src/tasks/TaskA.cpp
     src/tasks/TaskB.cpp

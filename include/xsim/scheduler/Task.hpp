@@ -1,9 +1,12 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <utility>
 
 namespace xsim {
+
+class TaskWorker;
 
 class Task {
 public:
@@ -22,6 +25,11 @@ public:
     long wcet_ns() const
     {
         return wcet_ns_;
+    }
+
+    uint64_t current_cycle() const
+    {
+        return current_cycle_;
     }
 
     virtual void initialize()
@@ -43,9 +51,17 @@ protected:
     }
 
 private:
+    friend class TaskWorker;
+
+    void set_current_cycle(uint64_t cycle)
+    {
+        current_cycle_ = cycle;
+    }
+
     std::string name_;
     long offset_ns_;
     long wcet_ns_;
+    uint64_t current_cycle_ = 0;
 };
 
 } // namespace xsim
