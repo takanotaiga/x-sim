@@ -1,0 +1,29 @@
+{
+  "name": "x-sim",
+  "version": "1.0.0",
+  "description": "Cyclic scheduler prototype with Quint specifications.",
+  "packageManager": "npm@10.9.8",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "quint:verify": "npm run quint:verify:api && npm run quint:verify:locking",
+    "quint:verify:api": "quint verify quint/shared_value.qnt --main=shared_value --invariants=typeOk,writerContract,optionalValueContract,writeMetadataContract,readerSnapshotContract --max-steps=8",
+    "quint:verify:locking": "quint verify quint/shared_value_locking.qnt --main=shared_value_locking --invariants=typeOk,lockExclusion,stableWhenReadable,completedReadsAreAtomic --max-steps=10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/takanotaiga/x-sim.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/takanotaiga/x-sim/issues"
+  },
+  "homepage": "https://github.com/takanotaiga/x-sim#readme",
+  "devDependencies": {
+    "@informalsystems/quint": "0.32.0"
+  }
+}

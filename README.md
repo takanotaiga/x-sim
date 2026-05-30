@@ -34,6 +34,35 @@ For a short timing check:
 timeout 10s ./build/x-sim
 ```
 
+## Model Checking
+
+The shared task-state contract is modeled with bounded Quint specifications:
+
+- `quint/shared_value.qnt` models the `SharedValue<T>` API contract for a
+  finite set of representative readers, values, cycles, and writes. Reader
+  identities are symmetry-reduced, since the implementation treats reader
+  handles uniformly.
+- `quint/shared_value_locking.qnt` models the `std::shared_mutex` critical
+  sections with read/write microsteps, so torn snapshots are representable but
+  should be unreachable while the lock protocol is respected.
+
+The checks cover the current design's single writer handle, repeated writer
+request failure, multiple reader handles by symmetry, write rejection outside a
+task-cycle context, write metadata (`cycle` and `sequence`), and atomic reader
+snapshots. These are bounded model checks, not unbounded proofs.
+
+Additional requirements:
+
+- Node.js 22
+- Java 21
+
+Run the same check used by CI with:
+
+```bash
+npm ci
+npm run quint:verify
+```
+
 The current `TaskA` prints the wall-clock Unix time in milliseconds once per 1000 ms cycle. `SIGINT` and `SIGTERM` request a graceful stop so task finalization hooks can run.
 
 ## Memory Locking
