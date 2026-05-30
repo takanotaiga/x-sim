@@ -1,4 +1,6 @@
 build/
+node_modules/
+_apalache-out/
 *.o
 *.out
 tick_1khz

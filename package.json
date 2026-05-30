@@ -1,0 +1,23 @@
+{
+  "name": "x-sim",
+  "version": "1.0.0",
+  "description": "Cyclic scheduler prototype with Quint specifications.",
+  "scripts": {
+    "quint:verify": "quint verify quint/shared_value.qnt --invariants=typeOk,singleWriter,writeMetadata,atomicReaderSnapshots --max-steps=8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/takanotaiga/x-sim.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/takanotaiga/x-sim/issues"
+  },
+  "homepage": "https://github.com/takanotaiga/x-sim#readme",
+  "devDependencies": {
+    "@informalsystems/quint": "0.32.0"
+  }
+}

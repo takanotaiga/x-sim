@@ -34,6 +34,20 @@ For a short timing check:
 timeout 10s ./build/x-sim
 ```
 
+## Model Checking
+
+The shared task-state contract is modeled in Quint at `quint/shared_value.qnt`.
+It covers the current `SharedValue<T>` design: a single writer handle, multiple
+reader handles, write metadata (`cycle` and `sequence`), and atomic reader
+snapshots.
+
+Run the same check used by CI with:
+
+```bash
+npm ci
+npm run quint:verify
+```
+
 The current `TaskA` prints the wall-clock Unix time in milliseconds once per 1000 ms cycle. `SIGINT` and `SIGTERM` request a graceful stop so task finalization hooks can run.
 
 ## Memory Locking
