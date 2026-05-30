@@ -55,6 +55,7 @@ For production, configure memory locking appropriately, for example with `CAP_IP
 ```text
 include/xsim/platform/     Clock and realtime setup APIs
 include/xsim/scheduler/    Task, worker, and cyclic scheduler APIs
+include/xsim/shared/       Shared value API for task-to-task state
 include/xsim/tasks/        Task registry API
 
 src/logging/               Async logging implementation
@@ -121,6 +122,33 @@ xsim::CyclicScheduler scheduler(
 ```
 
 If `TaskA` completes by its deadline, `TaskB` keeps its fixed offset. If `TaskA` is still running at `TaskB`'s release time, `TaskB` waits for `TaskA` to complete and the scheduler records `dependency_delay_count` / `dependency_delay_ns` plus a `[DEPENDENCY DELAY]` log. This delay is tracked separately from `late_start`, which remains focused on worker dispatch timing after a task is released.
+
+## Shared Task State
+
+Task-to-task values can be passed through `xsim::SharedValue<T>`. A shared value exposes one move-only writer handle and any number of reader handles. This keeps each variable single-writer / multi-reader: read access can be shared freely, while a second writer request for the same value fails at setup time.
+
+```cpp
+xsim::SharedValue<MyMessage> channel;
+auto writer = channel.writer();
+auto reader = channel.reader();
+```
+
+Each task can read its current scheduler cycle through `Task::current_cycle()`. `SharedValue::Writer::write()` records that current cycle automatically, so task implementations do not need to maintain their own cycle counters just to tag shared data.
+
+```cpp
+writer.write(message);
+```
+
+Readers get an atomic snapshot of the latest value, writer cycle, and update sequence. Internally the value is protected by `std::shared_mutex`, so concurrent readers are allowed and reads do not race with writes.
+
+`TaskRegistry` demonstrates explicit lifetime and dependency injection by creating one `TaskCDChannel`, passing its writer to `TaskC`, and passing its reader to `TaskD`. The channel state is owned by the handles shared with the tasks, so it remains valid for the scheduler/task lifetime without a global variable.
+
+Current C-D sample flow:
+
+```text
+TaskC: cycle + 500 ms writes TaskCDMessage
+TaskD: cycle + 900 ms reads the latest TaskCDMessage
+```
 
 ## Notes
 

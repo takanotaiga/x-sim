@@ -2,6 +2,7 @@
 
 #include "xsim/logging/Logging.hpp"
 #include "xsim/platform/Clock.hpp"
+#include "xsim/scheduler/TaskCycleContext.hpp"
 
 namespace xsim {
 
@@ -124,7 +125,12 @@ void TaskWorker::run()
             stats_.late_start_count++;
         }
 
-        task_.tick();
+        task_.set_current_cycle(invocation.cycle);
+
+        {
+            TaskCycleScope cycle_scope(invocation.cycle);
+            task_.tick();
+        }
 
         timespec actual_end = now_monotonic();
         long exec_ns = diff_ns(actual_end, actual_start);
